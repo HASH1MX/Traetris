@@ -7,14 +7,14 @@ const TETROMINOS = {
             [0, 0, 0, 0],
             [0, 0, 0, 0]
         ],
-        color: '#00FFFF' // Cyan
+        color: '#00ffff' // Neon Cyan
     },
     O: {
         shape: [
             [1, 1],
             [1, 1]
         ],
-        color: '#FFFF00' // Yellow
+        color: '#ffff00' // Neon Yellow
     },
     T: {
         shape: [
@@ -22,7 +22,7 @@ const TETROMINOS = {
             [1, 1, 1],
             [0, 0, 0]
         ],
-        color: '#800080' // Purple
+        color: '#ff00ff' // Neon Magenta
     },
     L: {
         shape: [
@@ -30,7 +30,7 @@ const TETROMINOS = {
             [1, 1, 1],
             [0, 0, 0]
         ],
-        color: '#FF7F00' // Orange
+        color: '#ff9900' // Neon Orange
     },
     J: {
         shape: [
@@ -38,7 +38,7 @@ const TETROMINOS = {
             [1, 1, 1],
             [0, 0, 0]
         ],
-        color: '#0000FF' // Blue
+        color: '#00ffff' // Neon Blue
     },
     S: {
         shape: [
@@ -46,7 +46,7 @@ const TETROMINOS = {
             [1, 1, 0],
             [0, 0, 0]
         ],
-        color: '#00FF00' // Green
+        color: '#39ff14' // Neon Green
     },
     Z: {
         shape: [
@@ -54,7 +54,7 @@ const TETROMINOS = {
             [0, 1, 1],
             [0, 0, 0]
         ],
-        color: '#FF0000' // Red
+        color: '#ff0066' // Neon Pink
     }
 };
 

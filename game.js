@@ -13,6 +13,7 @@ let board = [];
 let currentPiece, nextPiece;
 let score = 0;
 let highScore = parseInt(localStorage.getItem('tetrisHighScore')) || 0;
+let lastScore = 0;
 let gameOver = false;
 let gameStarted = false;
 let dropCounter = 0;
@@ -270,6 +271,8 @@ function hardDrop() {
 // Lock the piece in place
 function lockPiece() {
     const piece = currentPiece.shape;
+    let blocksPlaced = 0;
+    
     for (let row = 0; row < piece.length; row++) {
         for (let col = 0; col < piece[row].length; col++) {
             if (piece[row][col]) {
@@ -279,8 +282,22 @@ function lockPiece() {
                 // Only place on the board if within bounds
                 if (boardRow >= 0 && boardRow < ROWS && boardCol >= 0 && boardCol < COLS) {
                     board[boardRow][boardCol] = currentPiece.color;
+                    blocksPlaced++;
                 }
             }
+        }
+    }
+    
+    // Add points for placing blocks (100 points per block)
+    if (blocksPlaced > 0) {
+        score += blocksPlaced * 100;
+        scoreElement.textContent = score.toString();
+        
+        // Update high score if needed
+        if (score > highScore) {
+            highScore = score;
+            highScoreElement.textContent = highScore.toString();
+            localStorage.setItem('tetrisHighScore', highScore.toString());
         }
     }
     
@@ -294,7 +311,9 @@ function lockPiece() {
 // Check for completed lines
 function checkLines() {
     let linesCleared = 0;
+    let rowsToCheck = [];
     
+    // First pass: identify complete lines
     for (let row = ROWS - 1; row >= 0; row--) {
         let isLineComplete = true;
         
@@ -306,16 +325,19 @@ function checkLines() {
         }
         
         if (isLineComplete) {
-            // Remove the line and add a new empty line at the top
-            board.splice(row, 1);
-            board.unshift(Array(COLS).fill(0));
+            rowsToCheck.push(row);
             linesCleared++;
-            row++; // Check the same row again after shifting
         }
     }
     
-    // Update score based on lines cleared
+    // Second pass: remove all complete lines at once
     if (linesCleared > 0) {
+        rowsToCheck.sort((a, b) => b - a); // Sort in descending order
+        for (let row of rowsToCheck) {
+            board.splice(row, 1);
+            board.unshift(Array(COLS).fill(0));
+        }
+        // Update score based on total lines cleared
         updateScore(linesCleared);
     }
 }
@@ -324,28 +346,17 @@ function checkLines() {
 function updateScore(linesCleared) {
     let points = 0;
     
-    switch (linesCleared) {
-        case 1:
-            points = 100; // Single line
-            break;
-        case 2:
-            points = 300; // Double line
-            break;
-        case 3:
-            points = 500; // Triple line
-            break;
-        case 4:
-            points = 800; // Tetris
-            break;
-    }
+    // Award 1000 points for each line cleared
+    points = linesCleared * 1000;
     
     score += points;
-    scoreElement.textContent = score;
+    console.log('Score updated:', score, 'Points added:', points, 'Lines cleared:', linesCleared);
+    scoreElement.textContent = score.toString();
     
     // Update high score if needed
     if (score > highScore) {
         highScore = score;
-        highScoreElement.textContent = highScore;
+        highScoreElement.textContent = highScore.toString();
         localStorage.setItem('tetrisHighScore', highScore.toString());
     }
     
@@ -420,6 +431,7 @@ function resetGame() {
     gameOver = false;
     score = 0;
     scoreElement.textContent = '0';
+    highScoreElement.textContent = highScore;
     gameOverElement.style.display = 'none';
     startButton.style.display = 'block';
     restartButton.style.display = 'none';
@@ -431,9 +443,17 @@ function resetGame() {
 // End the game
 function endGame() {
     gameOver = true;
+    lastScore = score;
     finalScoreElement.textContent = score;
     gameOverElement.style.display = 'flex';
     cancelAnimationFrame(animationId);
+    
+    // Update high score at game end if needed
+    if (score > highScore) {
+        highScore = score;
+        highScoreElement.textContent = highScore;
+        localStorage.setItem('tetrisHighScore', highScore.toString());
+    }
 }
 
 // Initialize the game when the page loads
