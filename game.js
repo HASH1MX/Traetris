@@ -20,6 +20,13 @@ let dropCounter = 0;
 let dropInterval = 1000; // ms
 let lastTime = 0;
 let animationId;
+let backgroundMusic;
+let isMusicPlaying = false;
+
+// Undo functionality variables
+let undoCount = 3; // Number of undos available per game
+let gameStateHistory = []; // Array to store previous game states
+let maxHistoryLength = 10; // Maximum number of states to store
 
 // DOM elements
 const scoreElement = document.getElementById('score');
@@ -29,6 +36,10 @@ const gameOverElement = document.getElementById('game-over');
 const startButton = document.getElementById('start-button');
 const restartButton = document.getElementById('restart-button');
 const playAgainButton = document.getElementById('play-again-button');
+const musicToggleButton = document.getElementById('music-toggle');
+const settingsButton = document.getElementById('settings-button');
+const undoButton = document.getElementById('undo-button');
+const backgroundMusicElement = document.getElementById('background-music');
 
 // Initialize the game
 function init() {
@@ -43,11 +54,17 @@ function init() {
     // Display high score
     highScoreElement.textContent = highScore;
     
+    // Set up background music
+    backgroundMusic = document.getElementById('background-music');
+    musicToggleButton.addEventListener('click', toggleMusic);
+    
     // Add event listeners
     document.addEventListener('keydown', handleKeyPress);
     startButton.addEventListener('click', startGame);
     restartButton.addEventListener('click', resetGame);
     playAgainButton.addEventListener('click', resetGame);
+    undoButton.addEventListener('click', undoLastMove);
+    settingsButton.addEventListener('click', openSettings);
     
     // Draw the empty board
     createBoard();
@@ -220,6 +237,8 @@ function checkCollision(offsetX = 0, offsetY = 0, piece = currentPiece.shape) {
 function moveDown() {
     if (!checkCollision(0, 1)) {
         currentPiece.y++;
+        // Play move sound
+        soundManager.play('move');
         return true;
     }
     
@@ -232,6 +251,8 @@ function moveDown() {
 function moveLeft() {
     if (!checkCollision(-1, 0)) {
         currentPiece.x--;
+        // Play move sound
+        soundManager.play('move');
     }
 }
 
@@ -239,6 +260,8 @@ function moveLeft() {
 function moveRight() {
     if (!checkCollision(1, 0)) {
         currentPiece.x++;
+        // Play move sound
+        soundManager.play('move');
     }
 }
 
@@ -249,12 +272,16 @@ function rotatePiece() {
     // Check if rotation is possible
     if (!checkCollision(0, 0, rotated)) {
         currentPiece.shape = rotated;
+        // Play rotate sound
+        soundManager.play('rotate');
     } else {
         // Try wall kick (move left or right to allow rotation)
         for (let offset of [-1, 1, -2, 2]) {
             if (!checkCollision(offset, 0, rotated)) {
                 currentPiece.x += offset;
                 currentPiece.shape = rotated;
+                // Play rotate sound
+                soundManager.play('rotate');
                 break;
             }
         }
@@ -266,6 +293,8 @@ function hardDrop() {
     while (moveDown()) {
         // Keep moving down until collision
     }
+    // Play hard drop sound
+    soundManager.play('hardDrop');
 }
 
 // Lock the piece in place
@@ -306,6 +335,9 @@ function lockPiece() {
     
     // Generate a new piece
     generatePiece();
+    
+    // Save the game state for undo functionality
+    saveGameState();
 }
 
 // Check for completed lines
@@ -337,6 +369,8 @@ function checkLines() {
             board.splice(row, 1);
             board.unshift(Array(COLS).fill(0));
         }
+        // Play line clear sound
+        soundManager.play('lineClear');
         // Update score based on total lines cleared
         updateScore(linesCleared);
     }
@@ -407,6 +441,115 @@ function gameLoop(time = 0) {
     }
 }
 
+// Toggle background music and sound effects
+function toggleMusic() {
+    if (isMusicPlaying) {
+        backgroundMusic.pause();
+        musicToggleButton.textContent = '🔇';
+        // Mute sound effects
+        soundManager.mute();
+    } else {
+        backgroundMusic.play().catch(e => {
+            console.log('Audio playback failed:', e);
+        });
+        musicToggleButton.textContent = '🔊';
+        // Unmute sound effects
+        soundManager.unmute();
+    }
+    isMusicPlaying = !isMusicPlaying;
+}
+
+// Save the current game state for undo functionality
+function saveGameState() {
+    // Create a deep copy of the current board
+    const boardCopy = [];
+    for (let row = 0; row < ROWS; row++) {
+        boardCopy[row] = [...board[row]];
+    }
+    
+    // Create a copy of the current piece
+    const currentPieceCopy = currentPiece ? {
+        shape: JSON.parse(JSON.stringify(currentPiece.shape)),
+        color: currentPiece.color,
+        x: currentPiece.x,
+        y: currentPiece.y
+    } : null;
+    
+    // Create a copy of the next piece
+    const nextPieceCopy = nextPiece ? {
+        shape: JSON.parse(JSON.stringify(nextPiece.shape)),
+        color: nextPiece.color
+    } : null;
+    
+    // Save the current state
+    const gameState = {
+        board: boardCopy,
+        currentPiece: currentPieceCopy,
+        nextPiece: nextPieceCopy,
+        score: score
+    };
+    
+    // Add to history, maintaining the maximum length
+    gameStateHistory.push(gameState);
+    if (gameStateHistory.length > maxHistoryLength) {
+        gameStateHistory.shift(); // Remove oldest state
+    }
+    
+    // Update undo button text
+    updateUndoButton();
+}
+
+// Undo the last move
+function undoLastMove() {
+    // Check if undo is available
+    if (undoCount <= 0 || !gameStarted || gameOver || gameStateHistory.length < 2) {
+        return;
+    }
+    
+    // Remove the current state
+    gameStateHistory.pop();
+    
+    // Get the previous state
+    const previousState = gameStateHistory[gameStateHistory.length - 1];
+    
+    // Restore the game state
+    board = previousState.board;
+    currentPiece = previousState.currentPiece;
+    nextPiece = previousState.nextPiece;
+    score = previousState.score;
+    scoreElement.textContent = score.toString();
+    
+    // Decrement undo count
+    undoCount--;
+    
+    // Update undo button
+    updateUndoButton();
+    
+    // Play undo sound
+    soundManager.play('undo');
+    
+    // Redraw the board
+    drawBoard();
+    drawNextPiece();
+}
+
+// Update the undo button state
+function updateUndoButton() {
+    // Disable the button if no undos are left
+    if (undoCount <= 0) {
+        undoButton.disabled = true;
+    } else {
+        undoButton.disabled = false;
+    }
+}
+
+// Open settings menu (placeholder function)
+function openSettings() {
+    console.log('Settings button clicked');
+    // This is just a placeholder for now
+    alert('Settings functionality will be implemented in a future update!');
+}
+
 // Start the game
 function startGame() {
     if (gameStarted) return;
@@ -419,8 +562,24 @@ function startGame() {
     startButton.style.display = 'none';
     restartButton.style.display = 'block';
     
+    // Reset undo functionality
+    undoCount = 3;
+    gameStateHistory = [];
+    updateUndoButton();
+    
+    // Start background music if not already playing
+    if (!isMusicPlaying) {
+        backgroundMusic.play().catch(e => {
+            console.log('Audio playback failed:', e);
+        });
+        isMusicPlaying = true;
+        musicToggleButton.textContent = '🔊';
+    }
+    
     createBoard();
     generatePiece();
+    // Save initial game state
+    saveGameState();
     gameLoop();
 }
 
@@ -435,6 +594,18 @@ function resetGame() {
     gameOverElement.style.display = 'none';
     startButton.style.display = 'block';
     restartButton.style.display = 'none';
+    
+    // Reset undo functionality
+    undoCount = 3;
+    gameStateHistory = [];
+    updateUndoButton();
+    
+    // Pause music when game is reset
+    if (isMusicPlaying) {
+        backgroundMusic.pause();
+        isMusicPlaying = false;
+        musicToggleButton.textContent = '🔇';
+    }
     
     createBoard();
     drawBoard();

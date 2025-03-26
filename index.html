@@ -7,9 +7,16 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <!-- Audio element for background music -->
+    <audio id="background-music" loop>
+        <source src="Audio/background-music.mp3" type="audio/mp3">
+        Your browser does not support the audio element.
+    </audio>
+    
     <div class="game-container">
         <div class="game-info">
             <h1>Traetris</h1>
+            <!-- Music controls moved below start button -->
             <div class="score-container">
                 <div class="score">
                     <p>Score</p>
@@ -35,6 +42,11 @@
             </div>
             <button id="start-button">Start Game</button>
             <button id="restart-button" style="display: none;">Restart</button>
+            <div class="additional-controls">
+                <button id="music-toggle" class="control-button" title="Toggle Music">🔊</button>
+                <button id="settings-button" class="control-button" title="Settings">⚙️</button>
+                <button id="undo-button" class="control-button" title="Undo Move">↩️</button>
+            </div>
         </div>
         <div class="game-board-container">
             <canvas id="game-board" width="300" height="600"></canvas>
@@ -46,6 +58,7 @@
         </div>
     </div>
     <script src="tetrominos.js"></script>
+    <script src="Audio/sound-manager.js"></script>
     <script src="game.js"></script>
 </body>
 </html>

@@ -4,7 +4,7 @@ A modern implementation of the classic Tetris game built with JavaScript and HTM
 
 ## Play the Game
 
-You can play the game directly in your browser at: [Traetris Game](https://username.github.io/Traetris)
+You can play the game directly in your browser at: [Traetris Game](https://HASH1MX.github.io/Traetris)
 
 ## Game Features
 
