@@ -27,6 +27,18 @@ You can play the game directly in your browser at: [Traetris Game](https://HASH1
 2. Open index.html in your browser
 3. Start playing!
 
+4. 1. Clone the repository
+2. Open index.html in your browser
+3. Start playing!
+
+4. 1. Clone the repository
+2. Open index.html in your browser
+3. Start playing!
+
+4. 1. Clone the repository
+2. Open index.html in your browser
+3. Start playing!
+
 ## Technologies Used
 
 - HTML5 Canvas
